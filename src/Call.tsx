@@ -5,7 +5,7 @@ import { useDeviceManager } from "./useDevice";
 import { isDeviceListGuard } from "./utils";
 import DeviceSelector from "./DeviceSelector";
 
-const webSocketUrl = "wss://signal-server.waterhedgehog.com/ws";
+const webSocketUrl = "wss://signal-server.waterhedgehog.com:4000/ws";
 
 export const Call = () => {
   const {
