@@ -1,0 +1,77 @@
+body {
+  background-color: grey;
+}
+/* VideoChatRoom.css */
+.video-chat-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #312819bd;
+  padding: 20px;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.video-settings {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.video-settings label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #333;
+}
+
+.video-settings input,
+.video-settings select {
+  padding: 5px;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.video-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.video-controls button {
+  padding: 10px 15px;
+  font-size: 14px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.video-controls button:hover {
+  background-color: #0056b3;
+}
+
+.video-streams {
+  display: flex;
+  gap: 20px;
+}
+
+.video-window {
+  /* width: 400px;
+  height: 300px; */
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.video-window video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
