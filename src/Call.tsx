@@ -4,8 +4,9 @@ import { MyButton } from "./beautiful-button";
 import { useDeviceManager } from "./useDevice";
 import { isDeviceListGuard } from "./utils";
 import DeviceSelector from "./DeviceSelector";
+import { io, Socket } from "socket.io-client";
 
-const webSocketUrl = "wss://signal-server.waterhedgehog.com:4000/ws";
+const socketUrl = "https://signal-server.waterhedgehog.com:4000";
 
 export const Call = () => {
   const {
@@ -18,7 +19,7 @@ export const Call = () => {
   } = useDeviceManager();
 
   const location = useLocation();
-  const ws = useRef<WebSocket | null>(null);
+  const socket = useRef<Socket | null>(null);
   const localPeerConnection = useRef<RTCPeerConnection | null>(null);
   const remoteStreamRef = useRef<HTMLVideoElement | null>(null);
 
@@ -26,75 +27,63 @@ export const Call = () => {
   const channelName = queryParams.get("channelName");
   const userName = queryParams.get("userName");
 
-  // Memoize getCameraStream to prevent it from changing on every render
   const memoizedGetCameraStream = useCallback(() => {
     getCameraStream();
   }, [getCameraStream]);
 
-  const hasMounted = useRef(false); // Mount check to prevent double execution
+  const hasMounted = useRef(false);
 
   useEffect(() => {
-    if (hasMounted.current) return; // If already mounted, exit
-    hasMounted.current = true; // Set mounted flag to true
+    if (hasMounted.current) return;
+    hasMounted.current = true;
 
-    // Define sendWsMessage inside useEffect to avoid it being a dependency
-    const sendWsMessage = (type: string, body: Record<string, any>) => {
-      ws.current?.send(JSON.stringify({ type, body }));
-    };
+    socket.current = io(socketUrl, {
+      path: "/ws",
+      secure: true,
+      reconnection: true,
+      rejectUnauthorized: false,
+    });
 
-    const wsClient = new WebSocket(webSocketUrl);
-
-    wsClient.onopen = () => {
-      console.log("WebSocket connection opened");
-      ws.current = wsClient;
+    socket.current.on("connect", () => {
+      console.log("Connected to socket.io server");
       memoizedGetCameraStream();
-      sendWsMessage("join", { channelName: channelName, userName: userName });
-    };
+      socket.current?.emit("join", { channelName, userName });
+    });
 
-    wsClient.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
+    socket.current.on("disconnect", () => {
+      console.log("Disconnected from socket.io server");
+    });
 
-    wsClient.onmessage = (message: MessageEvent<string>) => {
-      const parsedMessage = JSON.parse(message.data) as {
-        type: string;
-        body: Record<string, any>;
-      };
+    socket.current.on("joined", (userNames) => {
+      console.log("Users in this channel:", userNames);
+    });
 
-      const { type, body } = parsedMessage;
+    socket.current.on("offer_sdp_received", (data) => {
+      console.log("Offer SDP received from:", data.from);
+      onAnswer(data.sdp);
+    });
 
-      switch (type) {
-        case "joined":
-          console.log("Users in this channel:", body);
-          break;
-        case "offer_sdp_received":
-          console.log("Offer SDP received from:", body.from);
-          onAnswer(body.sdp);
-          break;
-        case "answer_sdp_received":
-          console.log("Answer SDP received from:", body.from);
-          gotRemoteDescription(body.sdp);
-          break;
-        case "ice_candidate_received":
-          console.log("ICE candidate received from:", body.from);
-          const candidate = new RTCIceCandidate(body.candidate);
+    socket.current.on("answer_sdp_received", (data) => {
+      console.log("Answer SDP received from:", data.from);
+      gotRemoteDescription(data.sdp);
+    });
 
-          localPeerConnection.current
-            ?.addIceCandidate(candidate)
-            .then(() => {
-              console.log("Successfully added ICE candidate:", candidate);
-            })
-            .catch((error) => {
-              console.error("Error adding ICE candidate:", error);
-            });
-          break;
-        default:
-          console.warn(`Unhandled message type: ${type}`);
-      }
-    };
+    socket.current.on("ice_candidate_received", (data) => {
+      console.log("ICE candidate received from:", data.from);
+      const candidate = new RTCIceCandidate(data.candidate);
+
+      localPeerConnection.current
+        ?.addIceCandidate(candidate)
+        .then(() => {
+          console.log("Successfully added ICE candidate:", candidate);
+        })
+        .catch((error) => {
+          console.error("Error adding ICE candidate:", error);
+        });
+    });
 
     return () => {
-      ws.current?.close();
+      socket.current?.disconnect();
       localPeerConnection.current?.close();
       if (videoRef.current?.srcObject instanceof MediaStream) {
         videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
@@ -142,16 +131,11 @@ export const Call = () => {
     localPeerConnection.current
       ?.setLocalDescription(answer)
       .then(() => {
-        ws.current?.send(
-          JSON.stringify({
-            type: "send_answer",
-            body: {
-              channelName,
-              userName,
-              sdp: answer,
-            },
-          })
-        );
+        socket.current?.emit("send_answer", {
+          channelName,
+          userName,
+          sdp: answer,
+        });
       })
       .catch((error) =>
         console.error("Error setting local description:", error)
@@ -160,16 +144,11 @@ export const Call = () => {
 
   const gotLocalIceCandidateAnswer = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
-      ws.current?.send(
-        JSON.stringify({
-          type: "send_ice_candidate",
-          body: {
-            channelName: channelName,
-            userName: userName,
-            candidate: event.candidate,
-          },
-        })
-      );
+      socket.current?.emit("send_ice_candidate", {
+        channelName,
+        userName,
+        candidate: event.candidate,
+      });
     }
   };
 
@@ -196,19 +175,13 @@ export const Call = () => {
       .then(gotLocalDescription)
       .catch((error) => console.error("Error creating offer:", error));
   };
-
   const gotLocalIceCandidateOffer = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
-      ws.current?.send(
-        JSON.stringify({
-          type: "send_ice_candidate",
-          body: {
-            channelName: channelName,
-            userName: userName,
-            candidate: event.candidate,
-          },
-        })
-      );
+      socket.current?.emit("send_ice_candidate", {
+        channelName,
+        userName,
+        candidate: event.candidate,
+      });
     }
   };
 
@@ -216,16 +189,11 @@ export const Call = () => {
     localPeerConnection.current
       ?.setLocalDescription(offer)
       .then(() => {
-        ws.current?.send(
-          JSON.stringify({
-            type: "send_offer",
-            body: {
-              channelName: channelName,
-              userName: userName,
-              sdp: offer,
-            },
-          })
-        );
+        socket.current?.emit("send_offer", {
+          channelName,
+          userName,
+          sdp: offer,
+        });
       })
       .catch((error) =>
         console.error("Error setting local description:", error)
