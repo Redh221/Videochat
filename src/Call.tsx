@@ -78,9 +78,15 @@ export const Call = () => {
         case "ice_candidate_received":
           console.log("ICE candidate received from:", body.from);
           const candidate = new RTCIceCandidate(body.candidate);
-          localPeerConnection.current?.addIceCandidate(candidate).catch((e) => {
-            console.error("Error adding received ICE candidate", e);
-          });
+
+          localPeerConnection.current
+            ?.addIceCandidate(candidate)
+            .then(() => {
+              console.log("Successfully added ICE candidate:", candidate);
+            })
+            .catch((error) => {
+              console.error("Error adding ICE candidate:", error);
+            });
           break;
         default:
           console.warn(`Unhandled message type: ${type}`);
@@ -106,7 +112,11 @@ export const Call = () => {
 
   const onAnswer = (offer: RTCSessionDescriptionInit) => {
     const configuration: RTCConfiguration = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+      ],
     };
     const peerConnection = new RTCPeerConnection(configuration);
     localPeerConnection.current = peerConnection;
