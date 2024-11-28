@@ -9,7 +9,8 @@ export function useDeviceManager() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const constaintsRef = useRef<ContaintsType>({
-    video: { width: 1280, height: 720 },
+    // video: { width: 1280, height: 720 },
+    video: false,
     audio: { deviceId: { exact: "default" } },
   });
   const speakersRef = useRef<string | null>(null);
@@ -69,7 +70,8 @@ export function useDeviceManager() {
       }
     } catch (error) {
       constaintsRef.current = {
-        video: { width: 1280, height: 720 },
+        // video: { width: 1280, height: 720 },
+        video: false,
         audio: { deviceId: { exact: "default" } },
       };
       mediaStreamRef.current = await navigator.mediaDevices.getUserMedia(
