@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { MyButton } from "./beautiful-button";
 import { useDeviceManager } from "./useDevice";
@@ -26,13 +26,28 @@ export const Call = () => {
   const channelName = queryParams.get("channelName");
   const userName = queryParams.get("userName");
 
+  // Memoize getCameraStream to prevent it from changing on every render
+  const memoizedGetCameraStream = useCallback(() => {
+    getCameraStream();
+  }, [getCameraStream]);
+
+  const hasMounted = useRef(false); // Mount check to prevent double execution
+
   useEffect(() => {
+    if (hasMounted.current) return; // If already mounted, exit
+    hasMounted.current = true; // Set mounted flag to true
+
+    // Define sendWsMessage inside useEffect to avoid it being a dependency
+    const sendWsMessage = (type: string, body: Record<string, any>) => {
+      ws.current?.send(JSON.stringify({ type, body }));
+    };
+
     const wsClient = new WebSocket(webSocketUrl);
 
     wsClient.onopen = () => {
       console.log("WebSocket connection opened");
       ws.current = wsClient;
-      getCameraStream();
+      memoizedGetCameraStream();
       sendWsMessage("join", { channelName: channelName, userName: userName });
     };
 
@@ -79,7 +94,7 @@ export const Call = () => {
         videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [getCameraStream, videoRef, channelName, userName]);
+  }, [channelName, userName, memoizedGetCameraStream, videoRef]);
 
   const gotRemoteDescription = (answer: RTCSessionDescriptionInit) => {
     localPeerConnection.current
@@ -117,11 +132,16 @@ export const Call = () => {
     localPeerConnection.current
       ?.setLocalDescription(answer)
       .then(() => {
-        sendWsMessage("send_answer", {
-          channelName,
-          userName,
-          sdp: answer,
-        });
+        ws.current?.send(
+          JSON.stringify({
+            type: "send_answer",
+            body: {
+              channelName,
+              userName,
+              sdp: answer,
+            },
+          })
+        );
       })
       .catch((error) =>
         console.error("Error setting local description:", error)
@@ -130,16 +150,17 @@ export const Call = () => {
 
   const gotLocalIceCandidateAnswer = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
-      sendWsMessage("send_ice_candidate", {
-        channelName: channelName,
-        userName: userName,
-        candidate: event.candidate,
-      });
+      ws.current?.send(
+        JSON.stringify({
+          type: "send_ice_candidate",
+          body: {
+            channelName: channelName,
+            userName: userName,
+            candidate: event.candidate,
+          },
+        })
+      );
     }
-  };
-
-  const sendWsMessage = (type: string, body: Record<string, any>) => {
-    ws.current?.send(JSON.stringify({ type, body }));
   };
 
   const setupPeerConnection = () => {
@@ -168,11 +189,16 @@ export const Call = () => {
 
   const gotLocalIceCandidateOffer = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
-      sendWsMessage("send_ice_candidate", {
-        channelName: channelName,
-        userName: userName,
-        candidate: event.candidate,
-      });
+      ws.current?.send(
+        JSON.stringify({
+          type: "send_ice_candidate",
+          body: {
+            channelName: channelName,
+            userName: userName,
+            candidate: event.candidate,
+          },
+        })
+      );
     }
   };
 
@@ -180,11 +206,16 @@ export const Call = () => {
     localPeerConnection.current
       ?.setLocalDescription(offer)
       .then(() => {
-        sendWsMessage("send_offer", {
-          channelName: channelName,
-          userName: userName,
-          sdp: offer,
-        });
+        ws.current?.send(
+          JSON.stringify({
+            type: "send_offer",
+            body: {
+              channelName: channelName,
+              userName: userName,
+              sdp: offer,
+            },
+          })
+        );
       })
       .catch((error) =>
         console.error("Error setting local description:", error)
