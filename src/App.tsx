@@ -6,7 +6,7 @@ import { Call } from "./Call";
 
 function App() {
   return (
-    <BrowserRouter basename="/Videochat">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
 
