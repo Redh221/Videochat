@@ -101,9 +101,19 @@ export const Call = () => {
   const onAnswer = (offer: RTCSessionDescriptionInit) => {
     const configuration: RTCConfiguration = {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun.l.google.com:19302" }, // Дополнительный STUN-сервер
+        {
+          urls: [
+            "turn:ws-turn2.xirsys.com:80?transport=udp",
+            "turn:ws-turn2.xirsys.com:3478?transport=udp",
+            "turn:ws-turn2.xirsys.com:80?transport=tcp",
+            "turn:ws-turn2.xirsys.com:3478?transport=tcp",
+            "turns:ws-turn2.xirsys.com:443?transport=tcp",
+            "turns:ws-turn2.xirsys.com:5349?transport=tcp",
+          ],
+          username: "Redh221", // Ваш идентификатор
+          credential: "6fcdc374-b17e-11ef-9a45-0242ac130002", // Ваш секретный ключ
+        },
       ],
     };
     const peerConnection = new RTCPeerConnection(configuration);
@@ -153,7 +163,21 @@ export const Call = () => {
 
   const setupPeerConnection = () => {
     const configuration: RTCConfiguration = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+          urls: [
+            "turn:ws-turn2.xirsys.com:80?transport=udp",
+            "turn:ws-turn2.xirsys.com:3478?transport=udp",
+            "turn:ws-turn2.xirsys.com:80?transport=tcp",
+            "turn:ws-turn2.xirsys.com:3478?transport=tcp",
+            "turns:ws-turn2.xirsys.com:443?transport=tcp",
+            "turns:ws-turn2.xirsys.com:5349?transport=tcp",
+          ],
+          username: "Redh221", // Ваш идентификатор
+          credential: "6fcdc374-b17e-11ef-9a45-0242ac130002", // Ваш секретный ключ
+        },
+      ],
     };
 
     const peerConnection = new RTCPeerConnection(configuration);
