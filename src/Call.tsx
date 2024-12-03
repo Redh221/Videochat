@@ -38,7 +38,6 @@ export const Call = () => {
     hasMounted.current = true;
 
     socket.current = io(socketUrl, {
-      path: "/ws",
       secure: true,
       reconnection: true,
       rejectUnauthorized: false,
