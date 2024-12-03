@@ -6,9 +6,8 @@ import { isDeviceListGuard } from "./utils";
 import DeviceSelector from "./DeviceSelector";
 import { io, Socket } from "socket.io-client";
 
-const socketUrl = "https://chat.waterhedgehog.com";
-
 export const Call = () => {
+  const socketUrl = "https://chat.waterhedgehog.com/";
   const {
     devicesState,
     videoRef,
@@ -31,17 +30,18 @@ export const Call = () => {
     getCameraStream();
   }, [getCameraStream]);
 
-  const hasMounted = useRef(false);
+  // const hasMounted = useRef(false);
 
   useEffect(() => {
-    if (hasMounted.current) return;
-    hasMounted.current = true;
+    // if (hasMounted.current) return;
+    // hasMounted.current = true;
 
     socket.current = io(socketUrl, {
       secure: true,
       reconnection: true,
       rejectUnauthorized: false,
     });
+    console.log(socket.current, " VIVIVIIVIASIIASISA");
 
     socket.current.on("connect", () => {
       console.log("Connected to socket.io server");
