@@ -101,18 +101,21 @@ export const Call = () => {
   const onAnswer = (offer: RTCSessionDescriptionInit) => {
     const configuration: RTCConfiguration = {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" }, // Дополнительный STUN-сервер
         {
+          urls: ["stun:fr-turn2.xirsys.com"],
+        },
+        {
+          username:
+            "RHk7316rtzQxjwwEcP6-nZtIPdvENgax5GH8JyKWdtbzltMbiG5ELzAI5GWNTo6uAAAAAGdPGAdSZWRoMjIx",
+          credential: "5752b9b6-b184-11ef-8a07-0242ac120004",
           urls: [
-            "turn:ws-turn2.xirsys.com:80?transport=udp",
-            "turn:ws-turn2.xirsys.com:3478?transport=udp",
-            "turn:ws-turn2.xirsys.com:80?transport=tcp",
-            "turn:ws-turn2.xirsys.com:3478?transport=tcp",
-            "turns:ws-turn2.xirsys.com:443?transport=tcp",
-            "turns:ws-turn2.xirsys.com:5349?transport=tcp",
+            "turn:fr-turn2.xirsys.com:80?transport=udp",
+            "turn:fr-turn2.xirsys.com:3478?transport=udp",
+            "turn:fr-turn2.xirsys.com:80?transport=tcp",
+            "turn:fr-turn2.xirsys.com:3478?transport=tcp",
+            "turns:fr-turn2.xirsys.com:443?transport=tcp",
+            "turns:fr-turn2.xirsys.com:5349?transport=tcp",
           ],
-          username: "Redh221", // Ваш идентификатор
-          credential: "6fcdc374-b17e-11ef-9a45-0242ac130002", // Ваш секретный ключ
         },
       ],
     };
@@ -164,18 +167,21 @@ export const Call = () => {
   const setupPeerConnection = () => {
     const configuration: RTCConfiguration = {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
         {
+          urls: ["stun:fr-turn2.xirsys.com"],
+        },
+        {
+          username:
+            "RHk7316rtzQxjwwEcP6-nZtIPdvENgax5GH8JyKWdtbzltMbiG5ELzAI5GWNTo6uAAAAAGdPGAdSZWRoMjIx",
+          credential: "5752b9b6-b184-11ef-8a07-0242ac120004",
           urls: [
-            "turn:ws-turn2.xirsys.com:80?transport=udp",
-            "turn:ws-turn2.xirsys.com:3478?transport=udp",
-            "turn:ws-turn2.xirsys.com:80?transport=tcp",
-            "turn:ws-turn2.xirsys.com:3478?transport=tcp",
-            "turns:ws-turn2.xirsys.com:443?transport=tcp",
-            "turns:ws-turn2.xirsys.com:5349?transport=tcp",
+            "turn:fr-turn2.xirsys.com:80?transport=udp",
+            "turn:fr-turn2.xirsys.com:3478?transport=udp",
+            "turn:fr-turn2.xirsys.com:80?transport=tcp",
+            "turn:fr-turn2.xirsys.com:3478?transport=tcp",
+            "turns:fr-turn2.xirsys.com:443?transport=tcp",
+            "turns:fr-turn2.xirsys.com:5349?transport=tcp",
           ],
-          username: "Redh221", // Ваш идентификатор
-          credential: "6fcdc374-b17e-11ef-9a45-0242ac130002", // Ваш секретный ключ
         },
       ],
     };
