@@ -6,7 +6,7 @@ import { isDeviceListGuard } from "./utils";
 import DeviceSelector from "./DeviceSelector";
 import { io, Socket } from "socket.io-client";
 
-const socketUrl = "https://signal-server.waterhedgehog.com";
+const socketUrl = "https://chat.waterhedgehog.com";
 
 export const Call = () => {
   const {
