@@ -48,16 +48,8 @@ export const Call = () => {
       sendMessage();
     }
   };
-  console.log("USE EFFECT11111111111111111");
-  useEffect(() => {
-    console.log(
-      userName,
-      channelName,
-      " WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
-    );
-    if (!channelName || !userName) return;
-    console.log("USE EFFECT");
 
+  useEffect(() => {
     socket.current = io(socketUrl, {
       secure: true,
       reconnection: true,
@@ -66,11 +58,7 @@ export const Call = () => {
 
     socket.current.on("connect", () => {
       console.log("Connected to socket.io server");
-      console.log(
-        userName,
-        channelName,
-        " ASSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
-      );
+
       memoizedGetCameraStream();
       socket.current?.emit("join", { channelName, userName });
     });
