@@ -6,10 +6,14 @@ import { MyInput } from "./Input";
 const Home = () => {
   const [channelName, setChannelName] = useState("");
   const [userName, setUserName] = useState("");
-  //   const [value, setValue] = useState("");
+
   const navigate = useNavigate();
   const onCallClick = () => {
-    navigate(`/call?channelName=${channelName}&userName=${userName}`);
+    if (channelName.length > 0 && userName.length > 0) {
+      navigate(`/call?channelName=${channelName}&userName=${userName}`);
+    } else {
+      alert("Please select a channel");
+    }
   };
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -33,8 +37,7 @@ const Home = () => {
         placeholder="Enter channel name"
       />
       <div>
-        <MyButton onClick={onCallClick}>1</MyButton>
-        <MyButton color={"red"}>2</MyButton>
+        <MyButton onClick={onCallClick}>Join Channel</MyButton>
       </div>
       <div>
         <button></button>

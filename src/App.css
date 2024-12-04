@@ -1,7 +1,8 @@
+/* VideoChatRoom.css */
 body {
   background-color: grey;
 }
-/* VideoChatRoom.css */
+
 .video-chat-room {
   display: flex;
   flex-direction: column;
@@ -9,7 +10,8 @@ body {
   background-color: #312819bd;
   padding: 21px;
   width: 100vw;
-  height: 100vh;
+  /* Удаляем фиксированную высоту */
+  /* height: 100vh; */
   box-sizing: border-box;
 }
 
@@ -57,11 +59,12 @@ body {
 .video-streams {
   display: flex;
   gap: 20px;
+  flex-direction: column;
 }
 
 .video-window {
-  /* width: 400px;
-  height: 300px; */
+  width: 90vw;
+  max-width: 500px;
   background-color: #000;
   display: flex;
   justify-content: center;
@@ -70,8 +73,32 @@ body {
   border-radius: 10px;
 }
 
-.video-window video {
+.video-frame {
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.chat-section {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 20px;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.chatContainer {
+  border: 2px solid black;
+  background-color: aquamarine;
+  padding: 10px;
+  border-radius: 5px;
+  max-height: 300px;
+  overflow-y: auto;
 }

@@ -1,10 +1,13 @@
-import { useEffect, useRef, useCallback } from "react";
+// Call.tsx
+import React, { useEffect, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { MyButton } from "./beautiful-button";
 import { useDeviceManager } from "./useDevice";
 import { isDeviceListGuard } from "./utils";
 import DeviceSelector from "./DeviceSelector";
 import { io, Socket } from "socket.io-client";
+import { MyInput } from "./Input";
+import { useChat } from "./useChat";
 
 export const Call = () => {
   const socketUrl = "https://chat.waterhedgehog.com/";
@@ -16,32 +19,44 @@ export const Call = () => {
     changeResolution,
     mediaStreamStop,
   } = useDeviceManager();
-
   const location = useLocation();
   const socket = useRef<Socket | null>(null);
   const localPeerConnection = useRef<RTCPeerConnection | null>(null);
   const remoteStreamRef = useRef<HTMLVideoElement | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
   const queryParams = new URLSearchParams(location.search);
   const channelName = queryParams.get("channelName");
-  const userName = queryParams.get("userName");
+  let userName = queryParams.get("userName");
+
+  if (!userName) {
+    userName = "Guest";
+  }
 
   const memoizedGetCameraStream = useCallback(() => {
     getCameraStream();
   }, [getCameraStream]);
 
-  // const hasMounted = useRef(false);
+  const { chatState, chatBoxState, handleInputChange, sendMessage } = useChat(
+    socket.current,
+    userName // Теперь userName имеет тип string
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
   useEffect(() => {
-    // if (hasMounted.current) return;
-    // hasMounted.current = true;
+    if (!channelName || !userName) return;
 
     socket.current = io(socketUrl, {
       secure: true,
       reconnection: true,
       rejectUnauthorized: false,
     });
-    console.log(socket.current, " VIVIVIIVIASIIASISA");
 
     socket.current.on("connect", () => {
       console.log("Connected to socket.io server");
@@ -82,13 +97,19 @@ export const Call = () => {
     });
 
     return () => {
+      cleanupCall();
       socket.current?.disconnect();
-      localPeerConnection.current?.close();
-      if (videoRef.current?.srcObject instanceof MediaStream) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      }
+      socket.current = null;
     };
-  }, [channelName, userName, memoizedGetCameraStream, videoRef]);
+  }, []); // Выполняется один раз при монтировании компонента
+
+  // Автопрокрутка чата вниз при добавлении новых сообщений
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [chatBoxState]);
 
   const gotRemoteDescription = (answer: RTCSessionDescriptionInit) => {
     localPeerConnection.current
@@ -164,7 +185,8 @@ export const Call = () => {
     }
   };
 
-  const setupPeerConnection = () => {
+  const setupPeerConnection = async () => {
+    await getCameraStream();
     const configuration: RTCConfiguration = {
       iceServers: [
         {
@@ -204,6 +226,7 @@ export const Call = () => {
       .then(gotLocalDescription)
       .catch((error) => console.error("Error creating offer:", error));
   };
+
   const gotLocalIceCandidateOffer = (event: RTCPeerConnectionIceEvent) => {
     if (event.candidate) {
       socket.current?.emit("send_ice_candidate", {
@@ -239,8 +262,34 @@ export const Call = () => {
     }
   };
 
+  const endCall = () => {
+    if (localPeerConnection.current) {
+      localPeerConnection.current.onicecandidate = null;
+      localPeerConnection.current.ontrack = null;
+      localPeerConnection.current.close();
+      localPeerConnection.current = null;
+    }
+
+    if (remoteStreamRef.current && remoteStreamRef.current.srcObject) {
+      const remoteStream = remoteStreamRef.current.srcObject as MediaStream;
+      remoteStream.getTracks().forEach((track) => track.stop());
+      remoteStreamRef.current.srcObject = null;
+    }
+
+    socket.current?.emit("leave", { channelName, userName });
+  };
+
+  const cleanupCall = () => {
+    endCall();
+
+    if (videoRef.current?.srcObject instanceof MediaStream) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+
   return (
-    <div className="flex flex-col justify-center items-center h-screen">
+    <div className="flex flex-col items-center min-h-screen">
       <div className="video-chat-room">
         <div className="video-settings">
           {isDeviceListGuard(devicesState) ? (
@@ -266,28 +315,62 @@ export const Call = () => {
           )}
         </div>
         <div className="video-controls">
-          <button onClick={getCameraStream}>Start</button>
           <button onClick={mediaStreamStop}>Stop</button>
-          <button>Mute</button>
-          <button>Unmute</button>
-          <button>Screen Share</button>
+
           <button onClick={() => changeResolution(1280, 720)}>720p</button>
           <button onClick={() => changeResolution(854, 480)}>480p</button>
           <button onClick={() => changeResolution(640, 360)}>360p</button>
         </div>
         <div className="video-streams">
           <div className="video-window">
-            <video ref={videoRef} muted autoPlay playsInline controls />
+            <video
+              className="video-frame"
+              ref={videoRef}
+              muted
+              autoPlay
+              playsInline
+              controls
+            />
           </div>
           <div className="video-window">
-            <video ref={remoteStreamRef} autoPlay playsInline muted controls />
+            <video
+              className="video-frame"
+              ref={remoteStreamRef}
+              autoPlay
+              playsInline
+              muted
+              controls
+            />
+          </div>
+        </div>
+        <div className="chat-section">
+          <div className="chat-input">
+            <MyInput
+              value={chatState}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown} // Добавили обработчик здесь
+              placeholder="Enter message"
+            />
+            <MyButton color="green" onClick={sendMessage}>
+              Send
+            </MyButton>
+          </div>
+          <div className="chatContainer" ref={chatContainerRef}>
+            {chatBoxState.map((item, index) => (
+              <p key={index}>{`${item.userName}: ${item.chatState}`}</p>
+            ))}
           </div>
         </div>
       </div>
       <h1 className="text-2xl font-bold">Welcome to the Call!</h1>
       <p className="mt-4 text-lg">Channel Name: {channelName}</p>
       <p className="mt-2 text-lg">User Name: {userName}</p>
-      <MyButton onClick={setupPeerConnection}>Start Call</MyButton>
+      <div>
+        <MyButton onClick={setupPeerConnection}>Start Call</MyButton>
+        <MyButton color="red" onClick={endCall}>
+          Stop Call
+        </MyButton>
+      </div>
     </div>
   );
 };

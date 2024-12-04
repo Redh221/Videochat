@@ -138,6 +138,7 @@ export function useDeviceManager() {
     }
   };
   const mediaStreamStop = () => {
+    console.log("ya tyt");
     if (videoRef.current && videoRef.current.srcObject instanceof MediaStream) {
       videoRef.current.srcObject.getTracks().forEach((track) => {
         track.stop();

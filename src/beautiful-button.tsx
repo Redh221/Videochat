@@ -11,7 +11,7 @@ export const MyButton = ({
 }: BeautifulButtonProps) => {
   const colorClasses = {
     green:
-      "bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 focus:ring-green-300",
+      "bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 focus:ring-green-300 mr-2",
     red: "bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 focus:ring-red-300",
   };
 
