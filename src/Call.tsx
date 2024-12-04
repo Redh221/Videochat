@@ -39,7 +39,7 @@ export const Call = () => {
 
   const { chatState, chatBoxState, handleInputChange, sendMessage } = useChat(
     socket.current,
-    userName // Теперь userName имеет тип string
+    userName
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -50,7 +50,7 @@ export const Call = () => {
   };
 
   useEffect(() => {
-    if (!channelName || !userName) return;
+    // if (!channelName || !userName) return;
 
     socket.current = io(socketUrl, {
       secure: true,
@@ -101,9 +101,8 @@ export const Call = () => {
       socket.current?.disconnect();
       socket.current = null;
     };
-  }, []); // Выполняется один раз при монтировании компонента
+  }, []);
 
-  // Автопрокрутка чата вниз при добавлении новых сообщений
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
